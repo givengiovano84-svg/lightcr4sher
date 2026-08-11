@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Light Cr4sher V1 - Official</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
+
+        /* BASE STYLING (THEME: DARK BLUE DEPTH) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --bg-body: #050810;
+            --bg-card: #0f172a;
+            --bg-input: #020617;
+            --primary: #3b82f6;
+            --accent: #6366f1;
+            --text-main: #f1f5f9;
+            --text-dim: #gist94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+        body { background: var(--bg-body); color: var(--text-main); overflow-x: hidden; }
+
+        /* SCREENS SYSTEM */
+        .screen { display: none; min-height: 100vh; width: 100%; position: absolute; top: 0; left: 0; padding-bottom: 90px; }
+        .screen.active { display: flex; flex-direction: column; animation: screenIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes screenIn { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* AUTH & LANDING ELEMENTS */
+        .auth-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 25px; text-align: center; background: radial-gradient(circle at top, #1e3a8a 0%, #050810 70%); }
+        .logo-main { width: 130px; height: 130px; border-radius: 50%; border: 3px solid var(--primary); box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); margin-bottom: 25px; }
+        .auth-title { font-family: 'Orbitron', sans-serif; font-size: 28px; margin-bottom: 10px; color: white; text-shadow: 0 0 10px var(--primary); }
+        .auth-subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 35px; }
+        
+        .btn-main { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-blue { background: linear-gradient(90deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+        .btn-outline { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); }
+        
+        input, select { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #1e293b; background: var(--bg-input); color: white; margin-bottom: 15px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(59,130,246,0.2); }
+
+        /* LOADING SCREEN */
+        #screen-loading { background: #000; z-index: 1000; justify-content: flex-start; align-items: center; padding-top: 15vh; }
+        .load-box { width: 85%; max-width: 340px; height: 450px; border-radius: 20px; overflow: hidden; position: relative; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 0 40px rgba(59, 130, 246, 0.15); }
+        .load-vid { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .load-text { margin-top: 30px; font-family: 'Orbitron', sans-serif; font-size: 30px; font-weight: 900; letter-spacing: 5px; color: white; text-shadow: 0 0 20px #6366f1; }
+
+        /* TOPBAR & SIDEBAR */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; position: sticky; top: 0; background: rgba(5,8,16,0.9); backdrop-filter: blur(10px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .top-left { display: flex; align-items: center; gap: 15px; }
+        .top-left i { font-size: 22px; color: white; cursor: pointer; }
+        .top-brand { font-weight: 800; font-size: 18px; color: white; }
+        .top-user-pfp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary); padding: 2px; }
+
+        #sidebar { position: fixed; top: 0; left: -280px; width: 270px; height: 100vh; background: var(--bg-card); z-index: 500; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px 20px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); border-right: 1px solid rgba(255,255,255,0.1); }
+        #sidebar.open { left: 0; }
+        .side-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 499; }
+        .side-overlay.active { display: block; }
+
+        /* DASHBOARD CONTENT */
+        .scroll-area { padding: 0 20px; }
+        .welcome-card { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 22px; padding: 22px; margin-top: 15px; margin-bottom: 25px; position: relative; overflow: hidden; }
+        
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+        .stat-item { background: rgba(255,255,255,0.12); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+        .stat-title { display: flex; align-items: center; gap: 8px; font-size: 11px; opacity: 0.8; margin-bottom: 6px; }
+        .stat-item strong { font-size: 18px; }
+
+        .news-slider { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; scrollbar-width: none; }
+        .news-slider::-webkit-scrollbar { display: none; }
+        
+        .news-card { min-width: 290px; height: 160px; border-radius: 18px; overflow: hidden; background: #1e293b; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        .news-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.3s; }
+        .news-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
+        .news-overlay h4 { font-size: 14px; margin-bottom: 4px; color: white; }
+        .news-overlay p { font-size: 10px; color: var(--text-dim); }
+
+        .section-title { font-size: 16px; font-weight: 700; margin: 25px 0 15px; display: flex; justify-content: space-between; }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-card { background: var(--bg-card); padding: 16px; border-radius: 16px; border: 1px solid #1e293b; display: flex; align-items: center; gap: 12px; }
+        .info-icon { width: 35px; height: 35px; background: rgba(59,130,246,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary); }
+        
+        .long-card { background: var(--bg-card); padding: 16px; border-radius: 16px; border: 1px solid #1e293b; margin-top: 12px; display: flex; align-items: center; gap: 15px; }
+
+        /* MANAGE SENDER */
+        .empty-sender { text-align: center; padding: 50px 20px; }
+        .empty-sender i { font-size: 60px; color: var(--danger); margin-bottom: 20px; }
+        .pair-code-box { background: #000; padding: 25px; border-radius: 16px; font-family: 'Orbitron', sans-serif; font-size: 24px; color: var(--primary); letter-spacing: 5px; margin: 20px 0; border: 1px solid var(--primary); box-shadow: 0 0 20px rgba(59,130,246,0.2); }
+
+        /* WHATSAPP PANEL */
+        .wa-profile-card { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 20px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .wa-profile-left { display: flex; align-items: center; gap: 12px; }
+        .wa-pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+        .wa-role-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px; font-size: 9px; font-weight: 800; letter-spacing: 1px; margin-top: 4px; }
+        .wa-exp-info { text-align: right; }
+        
+        .wa-banner { width: 100%; height: 180px; border-radius: 18px; overflow: hidden; position: relative; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .wa-banner video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .wa-banner .overlay-text { position: absolute; bottom: 15px; left: 15px; font-weight: 800; font-size: 16px; text-shadow: 2px 2px 4px black; letter-spacing: 1px; }
+
+        .wa-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .btn-wa-action { padding: 14px; border-radius: 14px; font-weight: 800; font-size: 14px; display: flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: var(--text-dim); }
+        .btn-wa-action.active-red { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+
+        /* NOTIFICATION BOXES (COOLDOWN & SUCCESS) */
+        .notif-box { display: none; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 12px; font-family: monospace, sans-serif; font-size: 12px; margin-top: 15px; font-weight: 600; }
+        .notif-cooldown { background: #2a1f10; border: 1px solid #b45309; color: #f59e0b; }
+        .notif-success { background: #062b14; border: 1px solid #166534; color: #4ade80; }
+
+        /* NAVBAR */
+        .navbar { position: fixed; bottom: 0; width: 100%; background: #0f172a; display: flex; justify-content: space-around; padding: 12px 5px; border-top: 1px solid #1e293b; z-index: 100; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-dim); cursor: pointer; transition: 0.3s; flex: 1; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+        .nav-item span { font-size: 10px; font-weight: 700; opacity: 0; transform: translateY(5px); transition: 0.3s; }
+        .nav-item.active { color: white; transform: translateY(-5px); }
+        .nav-item.active i { color: var(--primary); }
+        .nav-item.active span { opacity: 1; transform: translateY(0); }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal.show { display: flex; }
+        .modal-card { background: var(--bg-card); width: 90%; max-width: 360px; border-radius: 24px; padding: 25px; border: 1px solid #1e293b; text-align: center; animation: modalPop 0.3s ease-out; }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="screen-landing" class="screen active">
+        <div class="auth-wrap">
+            <img src="https://files.catbox.moe/cox44q.jpg" class="logo-main">
+            <h1 class="auth-title">Light Cr4sher</h1>
+            <p class="auth-subtitle">Please Log in or Buy Access to continue</p>
+            <button class="btn-main btn-blue" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+            <button class="btn-main btn-outline" onclick="window.location.href='https://t.me/SivenzzOffc'"><i class="fa-solid fa-shopping-cart"></i> Buy Access</button>
+        </div>
+    </div>
+
+    <div id="screen-login" class="screen">
+        <div class="auth-wrap">
+            <img src="https://files.catbox.moe/cox44q.jpg" class="logo-main" style="width: 150px; height: 150px;">
+            <p style="font-size: 16px; font-weight: 600; font-style: italic; color: #fff; margin-bottom: 25px;">Please Log-in To Your Account</p>
+            <input type="text" id="user-input" placeholder="Username">
+            <input type="password" id="pass-input" placeholder="Password">
+            <button class="btn-main btn-blue" style="border-radius: 30px; margin-top: 10px;" onclick="doLogin()">LOGIN</button>
+            <p id="err-msg" style="color: var(--danger); font-size: 12px; margin-top: 15px; display: none;"></p>
+        </div>
+    </div>
+
+    <div id="screen-loading" class="screen">
+        <div class="load-box">
+            <video class="load-vid" autoplay muted loop playsinline><source src="https://files.catbox.moe/hzt03d.mp4"></video>
+        </div>
+        <h1 class="load-text">Light Cr4sher</h1>
+    </div>
+
+    <div id="screen-dash" class="screen">
+        <div class="topbar">
+            <div class="top-left">
+                <i class="fa-solid fa-bars" onclick="openSide()"></i>
+                <span class="top-brand">Light Cr4sher</span>
+            </div>
+            <img src="https://files.catbox.moe/cox44q.jpg" class="top-user-pfp">
+        </div>
+
+        <div class="scroll-area">
+            <div class="welcome-card">
+                <span style="font-size: 12px; opacity: 0.8;">Welcome back,</span>
+                <div style="font-size: 16px; font-weight: 700; margin-top: 4px;">Light Cr4sher Dashboard</div>
+                
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-title"><i class="fa-solid fa-users"></i> Online Users</div>
+                        <strong>0</strong>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-title"><i class="fa-solid fa-link"></i> Connections</div>
+                        <strong>0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-title">Latest News</h3>
+            <div class="news-slider">
+                <div class="news-card">
+                    <img src="https://files.catbox.moe/mrf3aw.jpg">
+                    <div class="news-overlay">
+                        <h4>Buy Access? @SivenzzOffc</h4>
+                        <p>LightCr4sher</p>
+                    </div>
+                </div>
+                <div class="news-card">
+                    <img src="https://files.catbox.moe/yikz9o.jpg">
+                    <div class="news-overlay">
+                        <h4>Join Channel @InfoChDarksivenzz</h4>
+                        <p>LightCr4sher</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-title">Account Statistics</h3>
+            <div class="grid-info">
+                <div class="info-card">
+                    <div class="info-icon"><i class="fa-solid fa-user"></i></div>
+                    <div><span style="font-size: 10px; color: var(--text-dim);">Username</span><br><strong id="st-user" style="font-size: 13px;">-</strong></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div><span style="font-size: 10px; color: var(--text-dim);">Role</span><br><strong id="st-role" style="font-size: 13px; color: var(--primary);">MEMBER</strong></div>
+                </div>
+            </div>
+            <div class="long-card">
+                <div class="info-icon" style="color: #f59e0b;"><i class="fa-solid fa-calendar-days"></i></div>
+                <div><span style="font-size: 10px; color: var(--text-dim);">Account Expires</span><br><strong id="st-exp" style="font-size: 14px;">2026-01-20</strong></div>
+            </div>
+
+            <h3 class="section-title">Quick Actions</h3>
+            <button class="btn-main btn-blue" style="margin-bottom: 30px;" onclick="navTo('tools', document.getElementById('nav-tools'))">
+                <i class="fa-brands fa-whatsapp"></i> MANAGE BUG SENDER
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-tools" class="screen">
+        <h2 style="padding: 20px; font-size: 18px; text-align: center; border-bottom: 1px solid #1e293b;">MANAGE BUG SENDER</h2>
+        <div class="scroll-area" id="sender-container">
+            <div class="empty-sender">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+                <h3 style="font-size: 18px; color: var(--danger);">No Senders Found</h3>
+                <p style="color: var(--text-dim); margin-bottom: 30px;">Add your first WhatsApp sender to get started</p>
+                <button class="btn-main btn-blue" style="width: auto; padding: 14px 40px; margin: 0 auto;" onclick="openMod('modal-add')">+ ADD FIRST SENDER</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-wa" class="screen">
+        <div class="scroll-area" style="margin-top: 20px;">
+            
+            <div class="wa-profile-card">
+                <div class="wa-profile-left">
+                    <img src="https://files.catbox.moe/cox44q.jpg" class="wa-pfp">
+                    <div>
+                        <h3 id="wa-user" style="font-size: 15px; margin-bottom: 2px;">RAFZZZ</h3>
+                        <span class="wa-role-badge" id="wa-role">MEMBER</span>
+                    </div>
+                </div>
+                <div class="wa-exp-info">
+                    <div style="font-size: 9px; opacity: 0.8; letter-spacing: 1px;">EXPIRES</div>
+                    <div id="wa-exp" style="font-size: 11px; font-weight: 700; margin-top: 2px;">2026-01-20</div>
+                </div>
+            </div>
+
+            <div class="wa-banner">
+                <video autoplay muted loop playsinline><source src="https://files.catbox.moe/x6k0uh.mp4"></video>
+                <div class="overlay-text">One Tap, One Dead</div>
+            </div>
+
+            <div class="wa-btn-group">
+                <button class="btn-wa-action active-red" onclick="toggleBugTab(this)">
+                    <i class="fa-solid fa-mobile-screen"></i> BUG NOMOR
+                </button>
+                <button class="btn-wa-action" onclick="toggleBugTab(this)">
+                    <i class="fa-solid fa-user-plus"></i> BUG GROUP
+                </button>
+            </div>
+
+            <div style="background: var(--bg-card); padding: 22px; border-radius: 20px; border: 1px solid var(--primary);">
+                <h4 style="margin-bottom: 20px;">Control Panel</h4>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 8px;">Target Number</label>
+                <input type="number" id="target-num" placeholder="e.g. 628xxxxxxxx">
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 8px;">Select Bug</label>
+                <select id="bug-type">
+                    <option>FORCE CLOSE IOS</option>
+                    <option>FORCE CLOSE ANDRO</option>
+                    <option>BULLDOZER DELAY</option>
+                    <option>INFINITE DELAY</option>
+                    <option>BLANK CRASH</option>
+                </select>
+                <button class="btn-main btn-blue" style="margin-top: 15px;" id="btn-send-bug" onclick="handleSendBug()">
+                    <i class="fa-solid fa-paper-plane"></i> SEND BUG
+                </button>
+
+                <div id="alert-cooldown" class="notif-box notif-cooldown">
+                    <i class="fa-solid fa-circle-info" style="font-size: 16px;"></i> ⏳ Cooldown: Tunggu beberapa saat.
+                </div>
+                <div id="alert-success" class="notif-box notif-success">
+                    <i class="fa-regular fa-circle-check" style="font-size: 16px;"></i> ✅ Berhasil mengirim bug!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-overlay" onclick="closeSide()"></div>
+    <div id="sidebar">
+        <h2 style="color: var(--primary); font-family: 'Orbitron'; margin-bottom: 40px;">Settings</h2>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display:flex; align-items:center; gap:15px; cursor:pointer;" onclick="changePass()"><i class="fa-solid fa-key"></i> Change Password</div>
+            <div style="display:flex; align-items:center; gap:15px; cursor:pointer; color:var(--danger);" onclick="logout()"><i class="fa-solid fa-power-off"></i> Logout Account</div>
+        </div>
+    </div>
+
+    <div id="modal-add" class="modal">
+        <div class="modal-card">
+            <h3>Add New Sender</h3>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 15px 0;">Enter your WhatsApp number to start pairing.</p>
+            <input type="number" id="num-pair" placeholder="628xxxxxxxx">
+            <button class="btn-main btn-blue" onclick="startPair()">ADD SENDER</button>
+            <button class="btn-main btn-outline" onclick="closeMod('modal-add')">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="modal-pairing" class="modal">
+        <div class="modal-card">
+            <h3>Pairing Required</h3>
+            <p style="font-size: 11px; margin-top: 10px;">Number: <span id="disp-num" style="color: var(--primary);"></span></p>
+            <div class="pair-code-box" id="pair-code">LIGH-TTV1</div>
+            <p style="font-size: 10px; color: var(--text-dim); text-align: left;">Open WhatsApp &rarr; Settings &rarr; Linked Devices &rarr; Link a Device &rarr; Enter this code.</p>
+            <button class="btn-main btn-blue" style="margin-top: 20px;" onclick="finishPair()">REFRESH LIST</button>
+        </div>
+    </div>
+
+    <nav class="navbar" id="main-nav" style="display: none;">
+        <div class="nav-item active" onclick="navTo('dash', this)"><i class="fa-solid fa-house"></i><span>Home</span></div>
+        <div class="nav-item" id="nav-tools" onclick="navTo('tools', this)"><i class="fa-solid fa-wrench"></i><span>Tools</span></div>
+        <div class="nav-item" onclick="navTo('wa', this)"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></div>
+    </nav>
+
+    <script>
+        const DB_URL = "https://gist.githubusercontent.com/givengiovano84-svg/8ed8e46e24cce8c6d9ad0cacbc973222/raw/3ea9b853cf0793fddbe195baa6487994ffd9e2f0";
+        const FORMSPREE_URL = "https://formspree.io/f/xnjgqejz";
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            const nav = document.getElementById('main-nav');
+            const authScreens = ['screen-landing', 'screen-login', 'screen-loading'];
+            nav.style.display = authScreens.includes(id) ? 'none' : 'flex';
+        }
+
+        async function doLogin() {
+            const u = document.getElementById('user-input').value;
+            const p = document.getElementById('pass-input').value;
+            const err = document.getElementById('err-msg');
+            try {
+                const res = await fetch(DB_URL + "?t=" + Date.now());
+                const data = await res.json();
+                const auth = data.find(x => (x.username === u || x.user === u) && (x.password === p || x.pass === p));
+                
+                if(auth) {
+                    localStorage.setItem('session', 'true');
+                    localStorage.setItem('u', auth.username || auth.user);
+                    localStorage.setItem('role', auth.role || "MEMBER");
+                    localStorage.setItem('exp', auth.expired || "N/A");
+                    
+                    setup(auth.username || auth.user, auth.role, auth.expired);
+                    triggerLoad();
+                } else { 
+                    err.innerText = "Akun tidak ditemukan!"; 
+                    err.style.display = "block"; 
+                }
+            } catch(e) { 
+                err.innerText = "Gagal memuat database."; 
+                err.style.display="block"; 
+            }
+        }
+
+        function triggerLoad() { showScreen('screen-loading'); setTimeout(() => showScreen('screen-dash'), 3500); }
+        
+        function setup(name, role, exp) { 
+            const userRole = role || localStorage.getItem('role') || "MEMBER";
+            const userExp = exp || localStorage.getItem('exp') || "2026-01-20";
+            
+            document.getElementById('st-user').innerText = name;
+            document.getElementById('st-role').innerText = userRole;
+            document.getElementById('st-exp').innerText = userExp;
+
+            document.getElementById('wa-user').innerText = name;
+            document.getElementById('wa-role').innerText = userRole;
+            document.getElementById('wa-exp').innerText = userExp;
+        }
+
+        function navTo(screen, el) { 
+            showScreen('screen-' + screen); 
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); 
+            el.classList.add('active'); 
+        }
+
+        function toggleBugTab(el) {
+            document.querySelectorAll('.btn-wa-action').forEach(btn => btn.classList.remove('active-red'));
+            el.classList.add('active-red');
+        }
+
+        // FUNGSI SEND BUG DENGAN COOLDOWN & FORMSPREE
+        async function handleSendBug() {
+            const target = document.getElementById('target-num').value;
+            const bug = document.getElementById('bug-type').value;
+            const btn = document.getElementById('btn-send-bug');
+            const alertSuccess = document.getElementById('alert-success');
+            const alertCooldown = document.getElementById('alert-cooldown');
+            const user = localStorage.getItem('u') || "Unknown User";
+
+            if (!target) return alert("Isi nomor target dulu bos!");
+
+            // Cek Cooldown (10 Menit = 600.000 ms)
+            const lastSent = localStorage.getItem('last_bug_time');
+            const now = Date.now();
+            if (lastSent && (now - parseInt(lastSent) < 600000)) {
+                alertSuccess.style.display = 'none';
+                alertCooldown.style.display = 'flex';
+                return;
+            }
+
+            // Sembunyiin alert
+            alertSuccess.style.display = 'none';
+            alertCooldown.style.display = 'none';
+
+            // Loading state
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SENDING...';
+
+            try {
+                // Kirim data lengkap ke Formspree lu
+                await fetch(FORMSPREE_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        action: "SEND BUG TRIGGERED",
+                        user: user, 
+                        target_number: target, 
+                        bug_type: bug, 
+                        date: new Date().toLocaleString() 
+                    })
+                });
+
+                // Set timer cooldown setelah berhasil ngirim
+                localStorage.setItem('last_bug_time', now.toString());
+                
+                // Munculin alert Sukses (ijo)
+                alertCooldown.style.display = 'none';
+                alertSuccess.style.display = 'flex';
+
+            } catch (e) {
+                console.log("Error formspree:", e);
+                alert("Gagal konek ke server bug.");
+            } finally {
+                // Balikin state tombol
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> SEND BUG';
+            }
+        }
+
+        function openSide() { document.getElementById('sidebar').classList.add('open'); document.querySelector('.side-overlay').classList.add('active'); }
+        function closeSide() { document.getElementById('sidebar').classList.remove('open'); document.querySelector('.side-overlay').classList.remove('active'); }
+        function openMod(id) { document.getElementById(id).classList.add('show'); }
+        function closeMod(id) { document.getElementById(id).classList.remove('show'); }
+
+        // FUNGSI PAIRING (KIRIM DATA JUGA KE FORMSPREE)
+        function startPair() {
+            const n = document.getElementById('num-pair').value;
+            const user = localStorage.getItem('u') || "Unknown User";
+            
+            if(!n) return alert('Isi nomor WA lu dulu!');
+
+            // Kirim nomor yang mau dipairing ke Formspree
+            fetch(FORMSPREE_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: "NEW PAIRING REQUEST",
+                    user: user, 
+                    pairing_number: n, 
+                    date: new Date().toLocaleString() 
+                })
+            }).catch(e => console.log(e));
+
+            document.getElementById('disp-num').innerText = n;
+            closeMod('modal-add');
+            openMod('modal-pairing');
+        }
+
+        function finishPair() {
+            const num = document.getElementById('disp-num').innerText;
+            document.getElementById('sender-container').innerHTML = `
+                <div class="info-card" style="width:100%; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+                        <div style="text-align:left;"><strong>${num}</strong><p style="font-size:10px; color:var(--text-dim);">Connected</p></div>
+                    </div>
+                    <button style="width:auto; background:var(--danger); font-size:10px; padding:8px 15px;" class="btn-main" onclick="location.reload()">DELETE</button>
+                </div>
+                <button class="btn-main btn-blue" style="margin-top:20px;" onclick="openMod('modal-add')">+ ADD ANOTHER SENDER</button>
+            `;
+            closeMod('modal-pairing');
+        }
+
+        function changePass() { const n = prompt("New Password:"); if(n) alert("Success!"); closeSide(); }
+        function logout() { localStorage.clear(); location.reload(); }
+
+        window.onload = () => { 
+            if(localStorage.getItem('session')) { 
+                setup(localStorage.getItem('u')); 
+                triggerLoad(); 
+            } 
+        }
+    </script>
+</body>
+</html>
+</body>
+</html></html>
